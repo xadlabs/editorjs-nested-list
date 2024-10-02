@@ -18,9 +18,29 @@
       flex-grow: 2;
     }
 
-    &-content,
     &-children {
       flex-basis: 100%;
+    }
+
+    &-drag-wrapper {
+      display: flex;
+      align-items: center;
+
+      &.drag-target {
+        background: #3c91fb2e;
+      }
+    }
+
+    &-drag-button {
+      margin-left: 1em;
+      background: #e8e8e8;
+      border-radius: 4px;
+      padding: 0.2em;
+      opacity: 0;
+    }
+
+    &-drag-wrapper:hover &-drag-button {
+      opacity: 1;
     }
 
     &-content {

@@ -78,6 +78,8 @@ interface NestedListCssClasses {
   wrapperUnordered: string;
   item: string;
   itemBody: string;
+  itemDragWrapper: string;
+  itemDragButton: string;
   itemContent: string;
   itemChildren: string;
   settingsWrapper: string;
@@ -156,6 +158,10 @@ export default class NestedList {
    * Caret helper
    */
   private caret: Caret;
+
+  private dragSource: HTMLElement | null = null;
+
+  private dragTarget: HTMLElement | null = null;
 
   /**
    * Render plugin`s main Element and fill it with saved data
@@ -390,10 +396,7 @@ export default class NestedList {
   createItem(content: string, items: ListItem[] = []): Element {
     const itemWrapper = Dom.make('li', this.CSS.item);
     const itemBody = Dom.make('div', this.CSS.itemBody);
-    const itemContent = Dom.make('div', this.CSS.itemContent, {
-      innerHTML: content,
-      contentEditable: (!this.readOnly).toString(),
-    });
+    const itemContent = this.createItemContent(content);
 
     itemBody.appendChild(itemContent);
     itemWrapper.appendChild(itemBody);
@@ -406,6 +409,70 @@ export default class NestedList {
     }
 
     return itemWrapper;
+  }
+
+  createItemContent(content: string): Element {
+    const itemContent = Dom.make('div', this.CSS.itemContent, {
+      innerHTML: content,
+      contentEditable: (!this.readOnly).toString(),
+    });
+
+    if (this.readOnly) {
+      return itemContent;
+    }
+
+    const dragButton = Dom.make('button', this.CSS.itemDragButton, {
+      innerHTML:
+        '<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M776.832 385.834667L512 121.002667 247.168 385.834667l60.330667 60.330666L512 241.664l204.501333 204.501333 60.330667-60.330666zM247.168 638.165333L512 902.997333l264.832-264.832-60.330667-60.330666L512 782.336l-204.501333-204.501333-60.330667 60.330666z" p-id="5140"></path></svg>',
+    });
+    const wrapper = Dom.make('div', this.CSS.itemDragWrapper, {});
+    wrapper.appendChild(itemContent);
+    wrapper.appendChild(dragButton);
+
+    wrapper.addEventListener('click', (ev) => {
+      if (ev.target === ev.currentTarget) {
+        ev.stopPropagation();
+        Caret.focus(itemContent, false);
+      }
+    });
+
+    wrapper.addEventListener('dragstart', () => {
+      this.dragSource = wrapper;
+    });
+
+    wrapper.addEventListener('dragover', (ev) => {
+      if (this.dragTarget) {
+        this.dragTarget.classList.remove('drag-target');
+      }
+      this.dragTarget = wrapper;
+      this.dragTarget.classList.add('drag-target');
+    });
+
+    wrapper.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      if (this.dragSource) {
+        const sourceContent = this.dragSource.querySelector(
+          `.${this.CSS.itemContent}`
+        )!;
+        const targetContent = itemContent;
+        const tempContent = targetContent.innerHTML;
+        targetContent.innerHTML = sourceContent.innerHTML;
+        sourceContent.innerHTML = tempContent;
+        Caret.focus(targetContent, false);
+      }
+    });
+
+    wrapper.addEventListener('dragend', () => {
+      if (this.dragTarget) {
+        this.dragTarget.classList.remove('drag-target');
+      }
+      this.dragSource = null;
+      this.dragTarget = null;
+    });
+
+    wrapper.draggable = true;
+
+    return wrapper;
   }
 
   /**
@@ -501,6 +568,8 @@ export default class NestedList {
       wrapperUnordered: 'cdx-nested-list--unordered',
       item: 'cdx-nested-list__item',
       itemBody: 'cdx-nested-list__item-body',
+      itemDragWrapper: 'cdx-nested-list__item-drag-wrapper',
+      itemDragButton: 'cdx-nested-list__item-drag-button',
       itemContent: 'cdx-nested-list__item-content',
       itemChildren: 'cdx-nested-list__item-children',
       settingsWrapper: 'cdx-nested-list__settings',
