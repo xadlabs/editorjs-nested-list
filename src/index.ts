@@ -450,19 +450,21 @@ export default class NestedList {
 
     wrapper.addEventListener('drop', (ev) => {
       ev.preventDefault();
-      if (this.dragSource) {
-        const sourceContent = this.dragSource.querySelector(
-          `.${this.CSS.itemContent}`
-        )!;
-        const targetContent = itemContent;
-        const tempContent = targetContent.innerHTML;
-        targetContent.innerHTML = sourceContent.innerHTML;
-        sourceContent.innerHTML = tempContent;
-        Caret.focus(targetContent, false);
-      }
     });
 
     wrapper.addEventListener('dragend', () => {
+      if (this.dragSource && this.dragTarget) {
+        const sourceContent = this.dragSource.querySelector(
+          `.${this.CSS.itemContent}`
+        )!;
+        const targetContent = this.dragTarget.querySelector(
+          `.${this.CSS.itemContent}`
+        )!;
+        const tempContent = targetContent.innerHTML;
+        targetContent.innerHTML = sourceContent.innerHTML;
+        sourceContent.innerHTML = tempContent;
+        Caret.focus(targetContent as HTMLElement, false);
+      }
       if (this.dragTarget) {
         this.dragTarget.classList.remove('drag-target');
       }
